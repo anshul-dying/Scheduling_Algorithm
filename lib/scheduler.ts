@@ -9,9 +9,7 @@ import type {
 import { fcfsScheduling } from "./algorithms/fcfs"
 import { roundRobinScheduling } from "./algorithms/round-robin"
 import { spnScheduling } from "./algorithms/spn"
-import { srtScheduling } from "./algorithms/srt"
-import { feedbackScheduling } from "./algorithms/feedback"
-import { feedbackVaryingScheduling } from "./algorithms/feedback-varying"
+// Removed SRT/FB/FBV from exported algorithms
 import { priorityScheduling } from "./algorithms/priority"
 
 export function runSchedulingAlgorithm(
@@ -26,20 +24,11 @@ export function runSchedulingAlgorithm(
     case "RR":
       return roundRobinScheduling(processes, config.timeQuantum || 2)
 
-    case "SPN":
+    case "SJF":
       return spnScheduling(processes)
 
-    case "SRT":
-      return srtScheduling(processes)
-
-    case "FB":
-      return feedbackScheduling(processes, config.numberOfQueues || 3)
-
-    case "FBV":
-      return feedbackVaryingScheduling(processes, config.numberOfQueues || 3, config.quantumMultiplier || 2)
-
     case "PRIORITY":
-      return priorityScheduling(processes, config.isPreemptive || false)
+      return priorityScheduling(processes, config.isPreemptive || false, config.priorityHighIsMin !== false)
 
     default:
       throw new Error(`Unknown scheduling algorithm: ${algorithm}`)
@@ -49,21 +38,15 @@ export function runSchedulingAlgorithm(
 export const algorithmNames: Record<SchedulingAlgorithm, string> = {
   FCFS: "First Come First Serve",
   RR: "Round Robin",
-  SPN: "Shortest Process Next",
-  SRT: "Shortest Remaining Time",
-  FB: "Feedback",
-  FBV: "Feedback with Varying Quantum",
+  SJF: "Shortest Job First",
   PRIORITY: "Priority Scheduling",
 }
 
 export const algorithmDescriptions: Record<SchedulingAlgorithm, string> = {
-  FCFS: "Non-preemptive algorithm that processes jobs in order of arrival",
-  RR: "Preemptive algorithm with fixed time quantum for fair CPU sharing",
-  SPN: "Non-preemptive algorithm that selects the shortest job first",
-  SRT: "Preemptive version of SPN that can switch to shorter jobs",
-  FB: "Multi-level queue with priority degradation over time",
-  FBV: "Feedback scheduling with varying time quantum per queue level",
-  PRIORITY: "Schedules processes based on priority values (lower number = higher priority)",
+  FCFS: "Processes jobs in order of arrival (non-preemptive)",
+  RR: "Fixed time quantum for fair CPU sharing (preemptive)",
+  SJF: "Selects the shortest job first (non-preemptive)",
+  PRIORITY: "Schedules based on priority; choose min or max as highest",
 }
 
 export function generateQueueAnimation(

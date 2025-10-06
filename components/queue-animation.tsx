@@ -36,7 +36,9 @@ export function QueueAnimationComponent({
           return prev
         }
         const newIndex = prev + 1
-        onTimeChange(animation.snapshots[newIndex]?.time || 0)
+        // Defer notifying parent until after render to avoid setState in render of parent warning
+        const nextTime = animation.snapshots[newIndex]?.time || 0
+        queueMicrotask(() => onTimeChange(nextTime))
         return newIndex
       })
     }, 1000 / speed)
@@ -52,7 +54,9 @@ export function QueueAnimationComponent({
   const handleSliderChange = (value: number[]) => {
     const newIndex = Math.floor((value[0] / 100) * (animation.snapshots.length - 1))
     setCurrentSnapshotIndex(newIndex)
-    onTimeChange(animation.snapshots[newIndex]?.time || 0)
+    const nextTime = animation.snapshots[newIndex]?.time || 0
+    // Defer to avoid updating parent during render
+    queueMicrotask(() => onTimeChange(nextTime))
   }
 
   const ProcessCard = ({
@@ -123,7 +127,7 @@ export function QueueAnimationComponent({
             <span className="text-sm">Speed:</span>
             <Slider
               value={[speed]}
-              onValueChange={(value) => setSpeed(value[0])}
+              onValueChange={(value: number[]) => setSpeed(value[0])}
               min={0.5}
               max={3}
               step={0.5}

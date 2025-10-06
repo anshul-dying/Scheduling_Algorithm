@@ -206,7 +206,7 @@ export function ResultsDashboard({ result, algorithmName, selectedAlgorithm }: R
                     cy="50%"
                     outerRadius={80}
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value.toFixed(1)}`}
+                    label={({ name, value }) => `${name}: ${typeof value === "number" ? value.toFixed(1) : value}`}
                   >
                     {metricsData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
