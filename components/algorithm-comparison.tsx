@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { Trophy, Medal, Award, Zap, Timer, ContrastIcon as Compare } from "lucide-react"
 import type { Process, SchedulingAlgorithm, SchedulingResult, AlgorithmConfig } from "@/lib/types"
@@ -26,6 +28,8 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
   const [selectedAlgorithms, setSelectedAlgorithms] = useState<SchedulingAlgorithm[]>(["FCFS", "RR", "SJF"])
   const [comparisonResults, setComparisonResults] = useState<ComparisonResult[]>([])
   const [isComparing, setIsComparing] = useState(false)
+  const [isPreemptive, setIsPreemptive] = useState(config.isPreemptive || false)
+  const [priorityHighIsMin, setPriorityHighIsMin] = useState(config.priorityHighIsMin || true)
 
   const allAlgorithms: SchedulingAlgorithm[] = ["FCFS", "RR", "SJF", "PRIORITY"]
 
@@ -46,9 +50,11 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
     selectedAlgorithms.forEach((algorithm) => {
       let algorithmConfig = {}
       if (algorithm === "RR") {
-        algorithmConfig = { timeQuantum: config.timeQuantum }
+        algorithmConfig = { timeQuantum: config.timeQuantum, isPreemptive: isPreemptive }
       } else if (algorithm === "PRIORITY") {
-        algorithmConfig = { isPreemptive: config.isPreemptive, priorityHighIsMin: config.priorityHighIsMin }
+        algorithmConfig = { isPreemptive: isPreemptive, priorityHighIsMin: priorityHighIsMin }
+      } else {
+        algorithmConfig = { isPreemptive: isPreemptive }
       }
 
       const result = runSchedulingAlgorithm(algorithm, processes, algorithmConfig)
@@ -118,7 +124,7 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
         {/* Algorithm Selection */}
         <div>
           <h4 className="font-medium mb-3">Select Algorithms to Compare</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {allAlgorithms.map((algorithm) => (
               <div key={algorithm} className="flex items-start space-x-2 w-full">
                 <Checkbox
@@ -138,6 +144,43 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Algorithm Configuration */}
+        <div className="pt-4 border-t space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="preemptive-mode" className="text-sm font-medium">
+                Preemptive Mode
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Allow processes to be interrupted and rescheduled
+              </p>
+            </div>
+            <Switch
+              id="preemptive-mode"
+              checked={isPreemptive}
+              onCheckedChange={setIsPreemptive}
+            />
+          </div>
+
+          {selectedAlgorithms.includes("PRIORITY") && (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="priority-direction" className="text-sm font-medium">
+                  Priority Direction
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {priorityHighIsMin ? "Lower numbers = Higher priority" : "Higher numbers = Higher priority"}
+                </p>
+              </div>
+              <Switch
+                id="priority-direction"
+                checked={priorityHighIsMin}
+                onCheckedChange={setPriorityHighIsMin}
+              />
+            </div>
+          )}
         </div>
 
         {/* Run Comparison Button */}

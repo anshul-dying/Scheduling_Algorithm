@@ -19,13 +19,13 @@ export function runSchedulingAlgorithm(
 ): SchedulingResult {
   switch (algorithm) {
     case "FCFS":
-      return fcfsScheduling(processes)
+      return fcfsScheduling(processes, config.isPreemptive || false)
 
     case "RR":
-      return roundRobinScheduling(processes, config.timeQuantum || 2)
+      return roundRobinScheduling(processes, config.timeQuantum || 2, config.isPreemptive !== false)
 
     case "SJF":
-      return spnScheduling(processes)
+      return spnScheduling(processes, config.isPreemptive || false)
 
     case "PRIORITY":
       return priorityScheduling(processes, config.isPreemptive || false, config.priorityHighIsMin !== false)
@@ -43,9 +43,9 @@ export const algorithmNames: Record<SchedulingAlgorithm, string> = {
 }
 
 export const algorithmDescriptions: Record<SchedulingAlgorithm, string> = {
-  FCFS: "Processes jobs in order of arrival (non-preemptive)",
-  RR: "Fixed time quantum for fair CPU sharing (preemptive)",
-  SJF: "Selects the shortest job first (non-preemptive)",
+  FCFS: "Processes jobs in order of arrival (configurable preemptive)",
+  RR: "Fixed time quantum for fair CPU sharing (configurable preemptive)",
+  SJF: "Selects the shortest job first (configurable preemptive)",
   PRIORITY: "Schedules based on priority; choose min or max as highest",
 }
 

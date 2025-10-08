@@ -35,9 +35,11 @@ export default function OSSchedulerPage() {
 
     let algorithmConfig = {}
     if (selectedAlgorithm === "RR") {
-      algorithmConfig = { timeQuantum: config.timeQuantum }
+      algorithmConfig = { timeQuantum: config.timeQuantum, isPreemptive: config.isPreemptive }
     } else if (selectedAlgorithm === "PRIORITY") {
       algorithmConfig = { isPreemptive: config.isPreemptive, priorityHighIsMin: config.priorityHighIsMin }
+    } else {
+      algorithmConfig = { isPreemptive: config.isPreemptive }
     }
 
     const schedulingResult = runSchedulingAlgorithm(selectedAlgorithm, processes, algorithmConfig)
@@ -150,16 +152,12 @@ export default function OSSchedulerPage() {
           </TabsContent>
 
           <TabsContent value="comparison" className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="space-y-6">
               {/* Process Input */}
-              <div className="xl:col-span-1">
-                <ProcessInput processes={processes} onProcessesChange={setProcesses} />
-              </div>
+              <ProcessInput processes={processes} onProcessesChange={setProcesses} />
 
               {/* Algorithm Comparison */}
-              <div className="xl:col-span-3">
-                <AlgorithmComparison processes={processes} config={config} />
-              </div>
+              <AlgorithmComparison processes={processes} config={config} />
             </div>
           </TabsContent>
         </Tabs>

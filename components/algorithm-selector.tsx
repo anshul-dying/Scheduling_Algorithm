@@ -29,9 +29,9 @@ const algorithmIcons: Record<SchedulingAlgorithm, React.ReactNode> = {
 }
 
 const algorithmTypes: Record<SchedulingAlgorithm, string> = {
-  FCFS: "Non-preemptive",
-  RR: "Preemptive",
-  SJF: "Non-preemptive",
+  FCFS: "Configurable",
+  RR: "Configurable",
+  SJF: "Configurable",
   PRIORITY: "Configurable",
 }
 
@@ -120,6 +120,18 @@ export function AlgorithmSelector({
         </div>
 
         {/* Algorithm Configuration */}
+        <div className="pt-4 border-t space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Preemptive Mode</Label>
+              <div className="text-xs text-muted-foreground">
+                Allow processes to be interrupted by higher priority or newly arrived processes
+              </div>
+            </div>
+            <Switch checked={config.isPreemptive || false} onCheckedChange={handlePreemptiveChange} />
+          </div>
+        </div>
+
         {selectedAlgorithm === "RR" && (
           <div className="pt-4 border-t space-y-4">
             <div>
@@ -149,15 +161,6 @@ export function AlgorithmSelector({
 
         {selectedAlgorithm === "PRIORITY" && (
           <div className="pt-4 border-t space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Preemptive Mode</Label>
-                <div className="text-xs text-muted-foreground">
-                  Allow higher priority processes to interrupt lower priority ones
-                </div>
-              </div>
-              <Switch checked={config.isPreemptive || false} onCheckedChange={handlePreemptiveChange} />
-            </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Priority Direction</Label>
