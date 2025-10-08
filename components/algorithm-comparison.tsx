@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { Trophy, Medal, Award, Zap, Timer, ContrastIcon as Compare } from "lucide-react"
 import type { Process, SchedulingAlgorithm, SchedulingResult, AlgorithmConfig } from "@/lib/types"
@@ -23,11 +25,13 @@ interface ComparisonResult {
 }
 
 export function AlgorithmComparison({ processes, config }: AlgorithmComparisonProps) {
-  const [selectedAlgorithms, setSelectedAlgorithms] = useState<SchedulingAlgorithm[]>(["FCFS", "RR", "SPN"])
+  const [selectedAlgorithms, setSelectedAlgorithms] = useState<SchedulingAlgorithm[]>(["FCFS", "RR", "SJF"])
   const [comparisonResults, setComparisonResults] = useState<ComparisonResult[]>([])
   const [isComparing, setIsComparing] = useState(false)
+  const [isPreemptive, setIsPreemptive] = useState(config.isPreemptive || false)
+  const [priorityHighIsMin, setPriorityHighIsMin] = useState(config.priorityHighIsMin || true)
 
-  const allAlgorithms: SchedulingAlgorithm[] = ["FCFS", "RR", "SPN", "SRT", "FB", "FBV"]
+  const allAlgorithms: SchedulingAlgorithm[] = ["FCFS", "RR", "SJF", "PRIORITY"]
 
   const handleAlgorithmToggle = (algorithm: SchedulingAlgorithm, checked: boolean) => {
     if (checked) {
@@ -46,11 +50,11 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
     selectedAlgorithms.forEach((algorithm) => {
       let algorithmConfig = {}
       if (algorithm === "RR") {
-        algorithmConfig = { timeQuantum: config.timeQuantum }
-      } else if (algorithm === "FB") {
-        algorithmConfig = { numberOfQueues: config.numberOfQueues }
-      } else if (algorithm === "FBV") {
-        algorithmConfig = { numberOfQueues: config.numberOfQueues, quantumMultiplier: config.quantumMultiplier }
+        algorithmConfig = { timeQuantum: config.timeQuantum, isPreemptive: isPreemptive }
+      } else if (algorithm === "PRIORITY") {
+        algorithmConfig = { isPreemptive: isPreemptive, priorityHighIsMin: priorityHighIsMin }
+      } else {
+        algorithmConfig = { isPreemptive: isPreemptive }
       }
 
       const result = runSchedulingAlgorithm(algorithm, processes, algorithmConfig)
@@ -120,26 +124,63 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
         {/* Algorithm Selection */}
         <div>
           <h4 className="font-medium mb-3">Select Algorithms to Compare</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {allAlgorithms.map((algorithm) => (
-              <div key={algorithm} className="flex items-start space-x-2">
+              <div key={algorithm} className="flex items-start space-x-2 w-full">
                 <Checkbox
                   id={algorithm}
                   checked={selectedAlgorithms.includes(algorithm)}
-                  onCheckedChange={(checked) => handleAlgorithmToggle(algorithm, checked as boolean)}
+                  onCheckedChange={(checked: boolean | "indeterminate") => handleAlgorithmToggle(algorithm, Boolean(checked))}
                 />
-                <div className="grid gap-1.5 leading-none">
+                <div className="grid gap-1.5 leading-none min-w-0 w-full">
                   <label
                     htmlFor={algorithm}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer break-words whitespace-normal"
                   >
                     {algorithmNames[algorithm]}
                   </label>
-                  <p className="text-xs text-muted-foreground">{algorithmDescriptions[algorithm]}</p>
+                  <p className="text-xs text-muted-foreground break-words whitespace-normal">{algorithmDescriptions[algorithm]}</p>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Algorithm Configuration */}
+        <div className="pt-4 border-t space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="preemptive-mode" className="text-sm font-medium">
+                Preemptive Mode
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Allow processes to be interrupted and rescheduled
+              </p>
+            </div>
+            <Switch
+              id="preemptive-mode"
+              checked={isPreemptive}
+              onCheckedChange={setIsPreemptive}
+            />
+          </div>
+
+          {selectedAlgorithms.includes("PRIORITY") && (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="priority-direction" className="text-sm font-medium">
+                  Priority Direction
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {priorityHighIsMin ? "Lower numbers = Higher priority" : "Higher numbers = Higher priority"}
+                </p>
+              </div>
+              <Switch
+                id="priority-direction"
+                checked={priorityHighIsMin}
+                onCheckedChange={setPriorityHighIsMin}
+              />
+            </div>
+          )}
         </div>
 
         {/* Run Comparison Button */}
@@ -218,10 +259,10 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
             <div>
               <h4 className="font-medium mb-3">Detailed Comparison</h4>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse table-fixed">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left p-3 font-medium">Algorithm</th>
+                      <th className="text-left p-3 font-medium w-40">Algorithm</th>
                       <th className="text-left p-3 font-medium">Avg Waiting</th>
                       <th className="text-left p-3 font-medium">Avg Turnaround</th>
                       <th className="text-left p-3 font-medium">Avg Response</th>
@@ -234,9 +275,9 @@ export function AlgorithmComparison({ processes, config }: AlgorithmComparisonPr
                     {comparisonResults.map((result) => (
                       <tr key={result.algorithm} className="border-b border-border/50">
                         <td className="p-3">
-                          <div>
+                          <div className="min-w-0">
                             <div className="font-mono font-medium">{result.algorithm}</div>
-                            <div className="text-xs text-muted-foreground">{result.name}</div>
+                            <div className="text-xs text-muted-foreground break-words whitespace-normal">{result.name}</div>
                           </div>
                         </td>
                         <td className="p-3">

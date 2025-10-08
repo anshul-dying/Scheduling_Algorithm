@@ -27,13 +27,12 @@ export interface GanttItem {
   isIdle?: boolean
 }
 
-export type SchedulingAlgorithm = "FCFS" | "RR" | "SPN" | "SRT" | "FB" | "FBV" | "PRIORITY"
+export type SchedulingAlgorithm = "FCFS" | "RR" | "SJF" | "PRIORITY"
 
 export interface AlgorithmConfig {
   timeQuantum?: number
-  numberOfQueues?: number
-  quantumMultiplier?: number
   isPreemptive?: boolean
+  priorityHighIsMin?: boolean
 }
 
 export interface QueueSnapshot {

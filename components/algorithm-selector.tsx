@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Clock, Layers, Zap, Timer, BarChart3, TrendingUp, Crown } from "lucide-react"
+import { Clock, Zap, Timer, Crown } from "lucide-react"
 import type { SchedulingAlgorithm, AlgorithmConfig } from "@/lib/types"
 import { algorithmNames, algorithmDescriptions } from "@/lib/scheduler"
 
@@ -24,30 +24,21 @@ interface AlgorithmSelectorProps {
 const algorithmIcons: Record<SchedulingAlgorithm, React.ReactNode> = {
   FCFS: <Clock className="w-4 h-4" />,
   RR: <Timer className="w-4 h-4" />,
-  SPN: <Zap className="w-4 h-4" />,
-  SRT: <TrendingUp className="w-4 h-4" />,
-  FB: <Layers className="w-4 h-4" />,
-  FBV: <BarChart3 className="w-4 h-4" />,
+  SJF: <Zap className="w-4 h-4" />,
   PRIORITY: <Crown className="w-4 h-4" />,
 }
 
 const algorithmTypes: Record<SchedulingAlgorithm, string> = {
-  FCFS: "Non-preemptive",
-  RR: "Preemptive",
-  SPN: "Non-preemptive",
-  SRT: "Preemptive",
-  FB: "Multi-level",
-  FBV: "Multi-level",
+  FCFS: "Configurable",
+  RR: "Configurable",
+  SJF: "Configurable",
   PRIORITY: "Configurable",
 }
 
 const algorithmComplexity: Record<SchedulingAlgorithm, "Simple" | "Medium" | "Complex"> = {
   FCFS: "Simple",
   RR: "Medium",
-  SPN: "Medium",
-  SRT: "Complex",
-  FB: "Complex",
-  FBV: "Complex",
+  SJF: "Medium",
   PRIORITY: "Medium",
 }
 
@@ -59,19 +50,13 @@ export function AlgorithmSelector({
   onRunSimulation,
   canRunSimulation,
 }: AlgorithmSelectorProps) {
-  const algorithms: SchedulingAlgorithm[] = ["FCFS", "RR", "SPN", "SRT", "PRIORITY", "FB", "FBV"]
+  const algorithms: SchedulingAlgorithm[] = ["FCFS", "RR", "SJF", "PRIORITY"]
 
   const handleTimeQuantumChange = (value: number[]) => {
     onConfigChange({ ...config, timeQuantum: value[0] })
   }
 
-  const handleNumberOfQueuesChange = (value: number[]) => {
-    onConfigChange({ ...config, numberOfQueues: value[0] })
-  }
-
-  const handleQuantumMultiplierChange = (value: number[]) => {
-    onConfigChange({ ...config, quantumMultiplier: value[0] })
-  }
+  // removed FB/FBV controls
 
   const handlePreemptiveChange = (checked: boolean) => {
     onConfigChange({ ...config, isPreemptive: checked })
@@ -106,14 +91,16 @@ export function AlgorithmSelector({
             <Button
               key={algorithm}
               variant={selectedAlgorithm === algorithm ? "default" : "outline"}
-              className="justify-start text-left h-auto p-4 relative"
+              className="justify-start text-left h-auto p-4 relative w-full whitespace-normal break-words"
               onClick={() => onAlgorithmChange(algorithm)}
             >
               <div className="flex items-start gap-3 w-full">
                 <div className="flex-shrink-0 mt-0.5">{algorithmIcons[algorithm]}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="font-medium">{algorithmNames[algorithm]}</div>
+                    <div className="font-medium break-words">
+                      {algorithmNames[algorithm]}
+                    </div>
                     <div className="flex gap-1">
                       <Badge variant="secondary" className="text-xs">
                         {algorithmTypes[algorithm]}
@@ -123,7 +110,7 @@ export function AlgorithmSelector({
                       </Badge>
                     </div>
                   </div>
-                  <div className="text-xs text-muted-foreground leading-relaxed">
+                  <div className="text-xs text-muted-foreground leading-relaxed break-words">
                     {algorithmDescriptions[algorithm]}
                   </div>
                 </div>
@@ -133,6 +120,18 @@ export function AlgorithmSelector({
         </div>
 
         {/* Algorithm Configuration */}
+        <div className="pt-4 border-t space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Preemptive Mode</Label>
+              <div className="text-xs text-muted-foreground">
+                Allow processes to be interrupted by higher priority or newly arrived processes
+              </div>
+            </div>
+            <Switch checked={config.isPreemptive || false} onCheckedChange={handlePreemptiveChange} />
+          </div>
+        </div>
+
         {selectedAlgorithm === "RR" && (
           <div className="pt-4 border-t space-y-4">
             <div>
@@ -164,69 +163,26 @@ export function AlgorithmSelector({
           <div className="pt-4 border-t space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Preemptive Mode</Label>
+                <Label className="text-sm font-medium">Priority Direction</Label>
                 <div className="text-xs text-muted-foreground">
-                  Allow higher priority processes to interrupt lower priority ones
+                  Choose if lower numbers or higher numbers are highest priority
                 </div>
               </div>
-              <Switch checked={config.isPreemptive || false} onCheckedChange={handlePreemptiveChange} />
+              <div className="flex items-center gap-2 text-xs">
+                <span>Max highest</span>
+                <Switch
+                  checked={config.priorityHighIsMin !== false}
+                  onCheckedChange={(checked) => onConfigChange({ ...config, priorityHighIsMin: checked })}
+                />
+                <span>Min highest</span>
+              </div>
             </div>
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-              <strong>Priority Scheduling:</strong> Processes are scheduled based on their priority values (lower number
-              = higher priority).
+              <strong>Priority Scheduling:</strong> Processes are scheduled based on their priority values. You can set
+              whether lower number or higher number is considered highest priority.
               {config.isPreemptive
                 ? " In preemptive mode, a higher priority process can interrupt a running lower priority process."
                 : " In non-preemptive mode, once a process starts executing, it runs to completion."}
-            </div>
-          </div>
-        )}
-
-        {(selectedAlgorithm === "FB" || selectedAlgorithm === "FBV") && (
-          <div className="pt-4 border-t space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium">Number of Queues</Label>
-                <span className="text-sm text-muted-foreground">{config.numberOfQueues || 3} queues</span>
-              </div>
-              <Slider
-                value={[config.numberOfQueues || 3]}
-                onValueChange={handleNumberOfQueuesChange}
-                min={2}
-                max={5}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>2</span>
-                <span>5</span>
-              </div>
-            </div>
-
-            {selectedAlgorithm === "FBV" && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium">Quantum Multiplier</Label>
-                  <span className="text-sm text-muted-foreground">×{config.quantumMultiplier || 2}</span>
-                </div>
-                <Slider
-                  value={[config.quantumMultiplier || 2]}
-                  onValueChange={handleQuantumMultiplierChange}
-                  min={1}
-                  max={4}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>×1</span>
-                  <span>×4</span>
-                </div>
-              </div>
-            )}
-
-            <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-              <strong>Multi-level Feedback:</strong> Processes start in the highest priority queue and move down when
-              they use their time quantum.{" "}
-              {selectedAlgorithm === "FBV" && "Each queue level has an increasingly larger time quantum."}
             </div>
           </div>
         )}
@@ -256,11 +212,8 @@ export function AlgorithmSelector({
               <span className="text-right text-xs">
                 {selectedAlgorithm === "FCFS" && "Simple batch systems"}
                 {selectedAlgorithm === "RR" && "Interactive systems"}
-                {selectedAlgorithm === "SPN" && "Batch systems with known job times"}
-                {selectedAlgorithm === "SRT" && "Interactive systems with varying job sizes"}
+                {selectedAlgorithm === "SJF" && "Batch systems with known job times"}
                 {selectedAlgorithm === "PRIORITY" && "Systems with process importance hierarchy"}
-                {selectedAlgorithm === "FB" && "General-purpose systems"}
-                {selectedAlgorithm === "FBV" && "Systems with diverse workloads"}
               </span>
             </div>
           </div>

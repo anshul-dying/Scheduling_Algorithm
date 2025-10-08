@@ -110,24 +110,29 @@ export function GanttChart({ ganttChart, processes, totalTime, algorithmName }: 
         {/* Gantt Chart */}
         <div>
           <h4 className="font-medium mb-3">Timeline Visualization</h4>
-          <div className="border border-border rounded-lg bg-card overflow-hidden">
+          <div className="border border-border rounded-lg bg-card overflow-x-auto overflow-y-visible">
             {/* Time Scale Header */}
             <div className="bg-muted/50 p-2 border-b border-border">
               <div className="flex items-center text-xs text-muted-foreground font-mono">
                 <div className="w-16 flex-shrink-0">Process</div>
-                <div className="flex-1 relative" style={{ minWidth: `${300 * zoomLevel}px` }}>
-                  <div className="flex">
-                    {Array.from({ length: totalTime + 1 }, (_, i) => (
-                      <div
-                        key={i}
-                        className="flex-shrink-0 text-center border-l border-border/50 px-1"
-                        style={{ width: `${(100 / totalTime) * zoomLevel}%`, minWidth: "20px" }}
-                      >
-                        {i}
+                {(() => {
+                  const unitPx = 30 * zoomLevel
+                  return (
+                    <div className="flex-1 relative" style={{ width: `${totalTime * unitPx}px` }}>
+                      <div className="flex">
+                        {Array.from({ length: totalTime + 1 }, (_, i) => (
+                          <div
+                            key={i}
+                            className="flex-shrink-0 text-center border-l border-border/50 px-1"
+                            style={{ width: `${unitPx}px` }}
+                          >
+                            {i}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 
@@ -135,67 +140,72 @@ export function GanttChart({ ganttChart, processes, totalTime, algorithmName }: 
             <div className="p-2">
               <div className="flex items-center">
                 <div className="w-16 flex-shrink-0 text-sm font-medium">CPU</div>
-                <div
-                  className="flex-1 relative h-12 border border-border rounded"
-                  style={{ minWidth: `${300 * zoomLevel}px` }}
-                >
-                  <div className="flex h-full">
-                    {ganttChart.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`
-                          relative border-r border-border/30 cursor-pointer transition-all duration-200
-                          ${getItemColor(item)}
-                          ${hoveredItem === index ? "ring-2 ring-ring ring-offset-1" : ""}
-                        `}
-                        style={{ width: `${getItemWidth(item)}%` }}
-                        onMouseEnter={() => setHoveredItem(index)}
-                        onMouseLeave={() => setHoveredItem(null)}
-                      >
-                        <div className="flex items-center justify-center h-full px-1">
-                          <span className="text-xs font-mono font-medium truncate">
-                            {item.isIdle ? "IDLE" : item.processId}
-                          </span>
-                        </div>
-
-                        {/* Tooltip */}
-                        {hoveredItem === index && (
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-10">
-                            <div className="bg-popover text-popover-foreground border border-border rounded-lg shadow-lg p-3 text-xs whitespace-nowrap">
-                              <div className="font-medium mb-1">
-                                {item.isIdle ? "CPU Idle Time" : `Process ${item.processId}`}
-                              </div>
-                              <div className="space-y-1 text-muted-foreground">
-                                <div>Start: {item.startTime}</div>
-                                <div>End: {item.endTime}</div>
-                                <div>Duration: {item.endTime - item.startTime}</div>
-                                {!item.isIdle && (
-                                  <>
-                                    <div className="border-t border-border pt-1 mt-1">
-                                      {(() => {
-                                        const process = processes.find((p) => p.id === item.processId)
-                                        return process ? (
-                                          <>
-                                            <div>Burst Time: {process.burstTime}</div>
-                                            <div>Arrival: {process.arrivalTime}</div>
-                                          </>
-                                        ) : null
-                                      })()}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                              {/* Tooltip arrow */}
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2">
-                                <div className="border-4 border-transparent border-t-popover"></div>
-                              </div>
+                {(() => {
+                  const unitPx = 30 * zoomLevel
+                  return (
+                    <div
+                      className="flex-1 relative h-12 border border-border rounded overflow-visible"
+                      style={{ width: `${totalTime * unitPx}px` }}
+                    >
+                      <div className="flex h-full">
+                        {ganttChart.map((item, index) => (
+                          <div
+                            key={index}
+                            className={`
+                              relative border-r border-border/30 cursor-pointer transition-all duration-200
+                              ${getItemColor(item)}
+                              ${hoveredItem === index ? "ring-2 ring-ring ring-offset-1" : ""}
+                            `}
+                            style={{ width: `${(item.endTime - item.startTime) * unitPx}px` }}
+                            onMouseEnter={() => setHoveredItem(index)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                          >
+                            <div className="flex items-center justify-center h-full px-1">
+                              <span className="text-xs font-mono font-medium truncate">
+                                {item.isIdle ? "IDLE" : item.processId}
+                              </span>
                             </div>
+
+                            {/* Tooltip */}
+                            {hoveredItem === index && (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+                                <div className="relative bg-popover text-popover-foreground border border-border rounded-lg shadow-lg p-3 text-xs whitespace-nowrap max-w-xs sm:max-w-sm md:max-w-md break-words">
+                                  <div className="font-medium mb-1">
+                                    {item.isIdle ? "CPU Idle Time" : `Process ${item.processId}`}
+                                  </div>
+                                  <div className="space-y-1 text-muted-foreground">
+                                    <div>Start: {item.startTime}</div>
+                                    <div>End: {item.endTime}</div>
+                                    <div>Duration: {item.endTime - item.startTime}</div>
+                                    {!item.isIdle && (
+                                      <>
+                                        <div className="border-t border-border pt-1 mt-1">
+                                          {(() => {
+                                            const process = processes.find((p) => p.id === item.processId)
+                                            return process ? (
+                                              <>
+                                                <div>Burst Time: {process.burstTime}</div>
+                                                <div>Arrival: {process.arrivalTime}</div>
+                                              </>
+                                            ) : null
+                                          })()}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                  {/* Tooltip arrow */}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2">
+                                    <div className="border-4 border-transparent border-t-popover"></div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 
@@ -203,22 +213,27 @@ export function GanttChart({ ganttChart, processes, totalTime, algorithmName }: 
             <div className="bg-muted/25 p-2 border-t border-border">
               <div className="flex items-center text-xs text-muted-foreground">
                 <div className="w-16 flex-shrink-0"></div>
-                <div className="flex-1" style={{ minWidth: `${300 * zoomLevel}px` }}>
-                  <div className="flex">
-                    {ganttChart.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex-shrink-0 text-center font-mono"
-                        style={{ width: `${getItemWidth(item)}%` }}
-                      >
-                        <div className="flex justify-between px-1">
-                          <span>{formatTime(item.startTime)}</span>
-                          {index === ganttChart.length - 1 && <span>{formatTime(item.endTime)}</span>}
-                        </div>
+                {(() => {
+                  const unitPx = 30 * zoomLevel
+                  return (
+                    <div className="flex-1" style={{ width: `${totalTime * unitPx}px` }}>
+                      <div className="flex">
+                        {ganttChart.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex-shrink-0 text-center font-mono"
+                            style={{ width: `${(item.endTime - item.startTime) * unitPx}px` }}
+                          >
+                            <div className="flex justify-between px-1">
+                              <span>{formatTime(item.startTime)}</span>
+                              {index === ganttChart.length - 1 && <span>{formatTime(item.endTime)}</span>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           </div>

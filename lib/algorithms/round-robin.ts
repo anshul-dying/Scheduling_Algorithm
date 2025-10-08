@@ -1,6 +1,6 @@
 import type { Process, SchedulingResult, GanttItem } from "../types"
 
-export function roundRobinScheduling(processes: Process[], timeQuantum = 2): SchedulingResult {
+export function roundRobinScheduling(processes: Process[], timeQuantum = 2, isPreemptive = true): SchedulingResult {
   const processQueue = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime)
   const readyQueue: Process[] = []
   const ganttChart: GanttItem[] = []

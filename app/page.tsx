@@ -24,8 +24,8 @@ export default function OSSchedulerPage() {
   const [queueAnimation, setQueueAnimation] = useState<QueueAnimation | null>(null)
   const [config, setConfig] = useState<AlgorithmConfig>({
     timeQuantum: 2,
-    numberOfQueues: 3,
-    quantumMultiplier: 2,
+    isPreemptive: false,
+    priorityHighIsMin: true,
   })
   const [isAnimationPlaying, setIsAnimationPlaying] = useState(false)
   const [currentAnimationTime, setCurrentAnimationTime] = useState(0)
@@ -35,12 +35,10 @@ export default function OSSchedulerPage() {
 
     let algorithmConfig = {}
     if (selectedAlgorithm === "RR") {
-      algorithmConfig = { timeQuantum: config.timeQuantum }
-    } else if (selectedAlgorithm === "FB") {
-      algorithmConfig = { numberOfQueues: config.numberOfQueues }
-    } else if (selectedAlgorithm === "FBV") {
-      algorithmConfig = { numberOfQueues: config.numberOfQueues, quantumMultiplier: config.quantumMultiplier }
+      algorithmConfig = { timeQuantum: config.timeQuantum, isPreemptive: config.isPreemptive }
     } else if (selectedAlgorithm === "PRIORITY") {
+      algorithmConfig = { isPreemptive: config.isPreemptive, priorityHighIsMin: config.priorityHighIsMin }
+    } else {
       algorithmConfig = { isPreemptive: config.isPreemptive }
     }
 
@@ -154,16 +152,12 @@ export default function OSSchedulerPage() {
           </TabsContent>
 
           <TabsContent value="comparison" className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="space-y-6">
               {/* Process Input */}
-              <div className="xl:col-span-1">
-                <ProcessInput processes={processes} onProcessesChange={setProcesses} />
-              </div>
+              <ProcessInput processes={processes} onProcessesChange={setProcesses} />
 
               {/* Algorithm Comparison */}
-              <div className="xl:col-span-3">
-                <AlgorithmComparison processes={processes} config={config} />
-              </div>
+              <AlgorithmComparison processes={processes} config={config} />
             </div>
           </TabsContent>
         </Tabs>

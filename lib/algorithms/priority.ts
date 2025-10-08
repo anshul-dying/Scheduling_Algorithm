@@ -1,6 +1,10 @@
 import type { Process, SchedulingResult, GanttItem } from "../types"
 
-export function priorityScheduling(processes: Process[], isPreemptive = false): SchedulingResult {
+export function priorityScheduling(
+  processes: Process[],
+  isPreemptive = false,
+  priorityHighIsMin: boolean = true
+): SchedulingResult {
   const processQueue = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime)
   const results: Process[] = processes.map((p) => ({
     ...p,
@@ -47,10 +51,13 @@ export function priorityScheduling(processes: Process[], isPreemptive = false): 
         continue
       }
 
-      // Select process with highest priority (lowest priority number)
-      const nextProcess = readyProcesses.reduce((highest, current) =>
-        current.priority! < highest.priority! ? current : highest,
-      )
+      // Select process with highest priority (min or max based on config)
+      const nextProcess = readyProcesses.reduce((best, current) => {
+        if (current.priority == null || best.priority == null) return best
+        return priorityHighIsMin
+          ? (current.priority < best.priority ? current : best)
+          : (current.priority > best.priority ? current : best)
+      })
 
       // Check if we need to preempt
       if (currentProcess && currentProcess.id !== nextProcess.id) {
@@ -136,10 +143,13 @@ export function priorityScheduling(processes: Process[], isPreemptive = false): 
         continue
       }
 
-      // Select process with highest priority (lowest priority number)
-      const selectedProcess = availableProcesses.reduce((highest, current) =>
-        current.priority! < highest.priority! ? current : highest,
-      )
+      // Select process with highest priority (min or max based on config)
+      const selectedProcess = availableProcesses.reduce((best, current) => {
+        if (current.priority == null || best.priority == null) return best
+        return priorityHighIsMin
+          ? (current.priority < best.priority ? current : best)
+          : (current.priority > best.priority ? current : best)
+      })
 
       // Remove selected process from remaining processes
       const processIndex = remainingProcesses.findIndex((p) => p.id === selectedProcess.id)
